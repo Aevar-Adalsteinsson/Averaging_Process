@@ -7,8 +7,9 @@ class Averaging_Process:
         self.G = G
         self.n = G.number_of_nodes()
         self.E = [e for e in G.edges]
-        self.E_n = G.size
-        self.t = 0
+        self.E_n = G.size()
+        self.clock = np.zeros(1)
+        self.t = 0.0
         self.eta = np.zeros(self.n)
         for i in range(self.n):
             self.eta[i] = xi[i]
@@ -34,7 +35,7 @@ class Averaging_Process:
                 arr_sum += x_sum
                 ind = np.searchsorted(x,k)
                 ind_arr += ind
-            return(list(arr[:ind_arr]))
+            return(arr[:ind_arr])
         
         n = len(E)
         exp_arr = exponential_array(t,lamb = n)
@@ -57,10 +58,21 @@ class Averaging_Process:
         L_sum = np.sum(vect)/self.n
         return(L_sum)
     def update(self,inc):
-        self.t += inc
         exp_arr,edge_arr = self.poisson_clock(self.E,inc)
+        self.clock = np.append(self.clock,self.t+exp_arr)
+        self.t += inc
         n = len(edge_arr)
         for i in range(n):
             e = edge_arr[i]
             self.average(e)
         return()
+    def inc(self,k):
+        edge_arr = np.random.randint(self.E_n,size=k)
+        edge_arr = [self.E[x] for x in edge_arr]
+        exp_arr = np.random.exponential(1/self.E_n,k)
+        exp_arr = np.cumsum(exp_arr)
+        self.clock = np.append(self.clock,self.t+exp_arr)
+        self.t = self.clock[len(self.clock)-1]
+        for i in range(k):
+            e = edge_arr[i]
+            self.average(e)
